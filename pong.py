@@ -84,6 +84,7 @@ class PongGame:
         self.fullscreen = False
         self.display = pygame.display.set_mode(self.windowed_size, pygame.RESIZABLE)
         self.screen = pygame.Surface((WIDTH, HEIGHT))
+        self.scaled_screen: pygame.Surface | None = None
         pygame.display.set_caption("PONG — TRON LEGACY")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 42)
@@ -211,15 +212,22 @@ class PongGame:
         sobrante con negro y centra la imagen para conservar sus proporciones.
         """
         display_width, display_height = self.display.get_size()
+        if (display_width, display_height) == (WIDTH, HEIGHT):
+            self.display.blit(self.screen, (0, 0))
+            pygame.display.flip()
+            return
+
         scale = min(display_width / WIDTH, display_height / HEIGHT)
         scaled_width = round(WIDTH * scale)
         scaled_height = round(HEIGHT * scale)
-        scaled_screen = pygame.transform.smoothscale(
-            self.screen, (scaled_width, scaled_height)
-        )
+        scaled_size = (scaled_width, scaled_height)
+        if self.scaled_screen is None or self.scaled_screen.get_size() != scaled_size:
+            self.scaled_screen = pygame.Surface(scaled_size)
+        # Reutiliza el destino para no crear una superficie nueva en cada fotograma.
+        pygame.transform.smoothscale(self.screen, scaled_size, self.scaled_screen)
         self.display.fill((0, 0, 0))
         self.display.blit(
-            scaled_screen,
+            self.scaled_screen,
             ((display_width - scaled_width) // 2, (display_height - scaled_height) // 2),
         )
         pygame.display.flip()
